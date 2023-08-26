@@ -103,7 +103,6 @@ exp_data_demo  <- function() {
   ui <- dashboardPage(
     dashboardHeader(title = "MURINE"),
     dashboardSidebar(
-      useShinyjs(),
       sidebarMenu(
         mod_get_exp_data_ui("demo")
       )

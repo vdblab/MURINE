@@ -1,12 +1,9 @@
 #' Ammend legacy data with fresh pull from REDcap
-#'
 #' @param token REDcap API token.
 #' @param api_uri REDcap API uri
 #' @param core_db_filename sqlite db with legacy data
 #' @param live_db_filename sqlite db to be created, containing legacy data and live
 #' @return The number of records added to db
-#' @examples
-#' ammend_db_from_redcap(token = "12345ABCDE")
 ammend_db_from_redcap <- function(token,
                                   api_uri = "https://redcap.mskcc.org/api/",
                                   core_db_filename = "data/db/vdb_mouse_app.db",
@@ -41,7 +38,6 @@ get_all_data_from_redcap <- function(token, api_uri) {
   col_types <- readr::cols(.default = readr::col_character())
 
   print("Loading dictionary")
-  # keys <- read.csv(sep=",", "../murine-backend/VDBMouseAppMURINEDataCollectio_DataDictionary_2021-12-20.csv")
   keys <- REDCapR::redcap_metadata_read(
     redcap_uri  = api_uri,
     token       = token,
@@ -81,7 +77,7 @@ tidy_up_redcap <- function(keys, DF) {
 
   # no idea how these arise
   colnames(DF) <- gsub("___1", "", colnames(DF))
-  split_dfs <- purrr:::map(
+  split_dfs <- purrr::map(
     forms, function(x) {
       # get the columns used by this form
       these_instr_cols <- instrument_cols %>%
@@ -132,13 +128,6 @@ tidy_up_redcap <- function(keys, DF) {
     by = c("redcap_protocol_id", "redcap_repeat_instrument", "redcap_repeat_instance")
   )
   split_dfs$score_and_weights_sw$value <- as.numeric(split_dfs$score_and_weights_sw$value)
-
-  # View(split_dfs$protocol)
-  # View(split_dfs$groups)
-  # View(split_dfs$antibiotics)
-  # View(split_dfs$score_and_weights_sw)
-  # View(split_dfs$protocol)
-
 
 
   # identify forms filled out without a separate initial weight by pulling out those where
@@ -275,9 +264,6 @@ tidy_up_redcap <- function(keys, DF) {
 
 
 make_redcap_and_db_match <- function(dat, con) {
-  # debug
-  # file.copy("data/db/vdb_mouse_app.db", "data/db/tmp_vdb_mouse_app.db", overwrite = TRUE)
-  # this makes use of a lot of the logic defined in load_legacy_data.R
   print("Adding the following from REDcap:")
   ################   Experiment
   # note redcap encodes complete as 2, incomplete as 0, and partial/mixed as 1.  WE convert that to complete being 1

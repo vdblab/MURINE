@@ -98,7 +98,7 @@ db_pull_flex <- function(db, exp = NULL, inv = NULL, groups = NULL, group_str = 
   if (is.null(exp)) {
     exps <- dplyr::tbl(db, "experiment") %>% collect()
   } else {
-    exps <- tbl(db, "experiment") %>%
+    exps <- dplyr::tbl(db, "experiment") %>%
       collect() %>%
       filter(name %in% {{ exp }})
   }
@@ -150,21 +150,19 @@ get_experiments_mice <- function(exps){
 
 
 load_nonreactive_global_data <- function(filename){
-  sqlite.driver <- dbDriver("SQLite")
-  db <- dbConnect(sqlite.driver,
+  sqlite.driver <-  DBI::dbDriver("SQLite")
+  db <- DBI::dbConnect(sqlite.driver,
                   dbname = filename
   )
   # These tables are read in to populate the sliders and stuff -- doing  it on load is a bit slow, but it saves
   # having to requery each time
-  all_mouse_observation <<- tibble(dbReadTable(db, "mouse_observation"))
-  # all_manipulations <- tibble(dbReadTable(db, "manipulation"))
-  all_observation <<- tibble(dbReadTable(db, "observation"))
-  # all_mouse <- tibble(dbReadTable(db, "mouse"))
-  all_experiment <<- tibble(dbReadTable(db, "experiment"))
+  all_mouse_observation <<- tibble(DBI::dbReadTable(db, "mouse_observation"))
+  all_observation <<- tibble(DBI::dbReadTable(db, "observation"))
+  all_experiment <<- tibble(DBI::dbReadTable(db, "experiment"))
 
   all_experiment <<- all_experiment %>%
     mutate(start_date = unjul(start_date))
-  all_experimental_group <<- tibble(dbReadTable(db, "experimental_group"))
+  all_experimental_group <<- tibble(DBI::dbReadTable(db, "experimental_group"))
   print("checking for issues with data")
   experiments_with_known_issues <<-  db_pull_flex(db) %>% get_experiments_mice() %>% group_by(experiment_id, name, investigator) %>%
     summarize(issue = case_when(
@@ -174,18 +172,17 @@ load_nonreactive_global_data <- function(filename){
     ) %>%
     filter(issue != "no issues")
   print("done")
+  DBI::dbDisconnect(db)
 }
 
-load_redcap_data <- function(DEBUG){
-  print(getwd())
+load_redcap_data <- function(DEBUG, filename){
   tryCatch({
-    if (DEBUG) dotenv::load_dot_env()
     REDCAP_TOKEN <- Sys.getenv("MURINE_REDCAP_TOKEN")
     REDCAP_URI <- Sys.getenv("MURINE_REDCAP_URI")
     ammend_db_from_redcap(
       token = REDCAP_TOKEN,
       api_uri = REDCAP_URI,
-      core_db_filename = system.file("extdata", "murine_data.db", package = "MURINE"),
+      core_db_filename = filename,
       live_db_filename = system.file("extdata", "tmp_murine_data.db", package = "MURINE")
     )
     # if successful, make filename global
@@ -193,7 +190,6 @@ load_redcap_data <- function(DEBUG){
   }, error=function(x){
     print(x)
     print("Only loading legacy data!")
-    filename <<- system.file("extdata", "murine_data.db", package = "MURINE")
   }
   )
 }
@@ -259,7 +255,6 @@ get_wt_tbl <- function(dat) {
 #'
 #' @return
 #' @importFrom stats sd
-#' @export
 #'
 #' @examples
   sem.func <- function(x) {
@@ -444,10 +439,8 @@ get_sc_tbl <- function(tbl_exp_data) {
 #' @param z 
 #' @param n_experiments 
 #' @param stat_test 
-#'
+#' @importFrom  survival Surv survfit survdiff coxph
 #' @return
-#' @importFrom stats formula, na.omit, sd
-#' @export
 #'
 #' @examples
 surv_make_surv_obj <- function(ev_d, ev_t, z, n_experiments, stat_test) {
@@ -459,11 +452,11 @@ surv_make_surv_obj <- function(ev_d, ev_t, z, n_experiments, stat_test) {
     Z = z
   )
   # fit survival
-  fit <- survival::survfit(as.formula(paste0("Surv(event_day, event_type) ~ Z")), data = survdata)
+  fit <- survfit(as.formula(paste0("Surv(event_day, event_type) ~ Z")), data = survdata)
   fitstat = "statistics only performed on single experiments"
   if (n_experiments == 1){
       if (stat_test == "Log-rank"){
-        fitstat <- survival::survdiff(as.formula(paste0("Surv(event_day, event_type) ~ Z")), data = survdata)
+        fitstat <- survdiff(as.formula(paste0("Surv(event_day, event_type) ~ Z")), data = survdata)
       } else if(stat_test == "Pairwise Log-rank"){
         if (!"pairwise_survdiff" %in% ls()){
           # our R 3.6 rconnect instance struggles with dependencies, so we source this directly :( 
@@ -471,7 +464,7 @@ surv_make_surv_obj <- function(ev_d, ev_t, z, n_experiments, stat_test) {
         }
         fitstat <- pairwise_survdiff(as.formula(paste0("Surv(event_day, event_type) ~ Z")), data = survdata)
       } else if (startsWith(stat_test, "Cox")){
-        fitstat <-  survival::coxph(as.formula(paste0("Surv(event_day, event_type) ~ Z")), data = survdata)
+        fitstat <-  coxph(as.formula(paste0("Surv(event_day, event_type) ~ Z")), data = survdata)
       } else{
         fitstat <- "Unknown test"
       }

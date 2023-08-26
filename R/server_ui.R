@@ -1,27 +1,20 @@
-# load libraries
-# library(shiny)
-# library(shinydashboard)
-# library(plotly)
-# library(dygraphs)
-# library(tibble)
-# library(dbplyr)
-# library(dplyr)
-# library(lubridate)
-# #library(GGally)
-# library(survival)
-# library(DBI)
-# library(stringr)
-# library(RSQLite)
-# library(DT)
-
-
-
-
-MURINE <- function(filename, ...){
+' Main Function
+#'
+#' @name MURINE
+#' @rdname murine
+#' @export
+#' @import shinydashboard
+#' @param db_path path to your sqlite db
+#' @return A shiny dashboard for all your beautiful mouse data
+MURINE <- function(db_path, ...){
   rvs <- reactiveValues(pull_time = Sys.time())
-  if(missing(filename)) filename <- system.file("extdata", "murine_data.db", package = "MURINE")
+  if(missing(db_path)) {
+    filename <<- system.file("extdata", "murine_data.db", package = "MURINE")
+  } else{
+    filename <<- db_path
+  }
   DEBUG <- interactive()
-  load_redcap_data(DEBUG=DEBUG)
+  load_redcap_data(DEBUG=DEBUG, filename=filename)
   
   sqlite.driver <- DBI::dbDriver("SQLite")
   db <<- DBI::dbConnect(sqlite.driver, dbname = filename)
@@ -35,7 +28,7 @@ MURINE <- function(filename, ...){
     shinydashboard::dashboardHeader(title = "MURINE"),
     shinydashboard::dashboardSidebar(
       shinyjs::useShinyjs(),
-      sidebarMenu(
+      shinydashboard::sidebarMenu(
         shinydashboard::menuItem("Give Feedback!", icon = icon("comments"), href = "https://forms.office.com/r/HVKE1BkS7G"),
         shinydashboard::menuItem("Home", icon = icon("tachometer-alt"), tabName = "dashboard"),
         shinydashboard::menuItem("Survival Curves", icon = icon("chart-line"), tabName = "survivalCurves"),
@@ -319,8 +312,8 @@ MURINE <- function(filename, ...){
       ammend_db_from_redcap(
         token = REDCAP_TOKEN,
         api_uri = REDCAP_URI,
-        core_db_filename = "data/db/vdb_mouse_app.db",
-        live_db_filename = "data/db/tmp_vdb_mouse_app.db"
+        core_db_filename = filename,
+        live_db_filename = system.file("extdata", "tmp_murine_data.db", package = "MURINE")
       )
       rvs$pull_time <- Sys.time()
     })

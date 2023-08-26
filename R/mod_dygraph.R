@@ -16,6 +16,7 @@ mod_dygraph_ui <- function(id){
 
 #' dygraph Server Functions
 #'
+#' @import dygraphs
 #' @noRd
 mod_dygraph_server <- function(id, tbl_exp_data){
   moduleServer( id, function(input, output, session){

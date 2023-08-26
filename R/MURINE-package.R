@@ -4,10 +4,12 @@
 ## usethis namespace: start
 #' @import shiny
 #' @import ggplot2
-#' @importFrom dplyr mutate filter  ungroup group_by bind_rows case_when
-#' @importFrom tibble as_tibble
-#' @importFrom tidyselect starts_with 
-#' @importFrom stats na.omit sd
-#' @importFrom utils head write.csv 
+#' @import dplyr
+#' @importFrom tibble as_tibble tibble column_to_rownames
+#' @importFrom tidyselect starts_with
+#' @importFrom stats na.omit sd 'as.formula'
+#' @importFrom utils head write.csv
+#' @importFrom RSQLite SQLite
+#' @importFrom stringr str_split str_glue str_trim str_wrap
 ## usethis namespace: end
 NULL

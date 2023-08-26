@@ -66,7 +66,6 @@ mod_surv_outcomes_server <- function(id, tbl_sc){
   })
 }
 surv_data_demo  <- function() {
-  library(shiny)
   ui <- fluidPage(
     mod_get_exp_data_ui("demo"),
     tableOutput("thistbl"),

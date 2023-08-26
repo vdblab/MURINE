@@ -7,6 +7,7 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
+#' @importFrom plotly plotlyOutput
 mod_piegraph_ui <- function(id){
   ns <- NS(id)
   tagList(
@@ -14,24 +15,24 @@ mod_piegraph_ui <- function(id){
   )
 }
 
-#' dygraph Server Functions
+#' pie Server Functions
 #'
 #' @noRd
 mod_piegraph_server <- function(id, tbl_exp_data){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
-    output$pie_investigator <- renderPlotly({
+    output$pie_investigator <- plotly::renderPlotly({
       tbl_exp_data() %>% select(investigator, mouse_id) %>% distinct() %>%
         group_by(investigator) %>%
         tally() %>%
-        plot_ly(
+        plotly::plot_ly(
           labels = ~investigator, values = ~n,
           textposition = "inside",
           textinfo = "label+percent",
           showlegend = FALSE
         ) %>%
-        add_pie(hole = 0.5) %>%
-        layout(
+        plotly::add_pie(hole = 0.5) %>%
+        plotly::layout(
           title = "Mice per investigator",
           xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
           yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE)

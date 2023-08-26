@@ -7,7 +7,6 @@ try_amend_local_db <- function(){
       warning(paste("Env variable ", required_var, "must be set to access redcap; only loading legacy data"))
     }
   }
-  library(REDCapR)
   if (REDCAP_ACCESSIBLE) {
     REDCAP_TOKEN <- Sys.getenv("REDCAP_TOKEN")
     REDCAP_URI <- Sys.getenv("REDCAP_URI")
