@@ -313,7 +313,7 @@ MURINE <- function(db_path, ...){
         token = REDCAP_TOKEN,
         api_uri = REDCAP_URI,
         core_db_filename = filename,
-        live_db_filename = system.file("extdata", "tmp_murine_data.db", package = "MURINE")
+        live_db_filename = "tmp_murine_data.db"
       )
       rvs$pull_time <- Sys.time()
     })

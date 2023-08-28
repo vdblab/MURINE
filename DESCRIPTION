@@ -1,6 +1,6 @@
 Package: MURINE
 Title: Multifunction User Rodent Interface for iN-vivo Experiments
-Version: 0.1.3
+Version: 0.1.4
 Authors@R: 
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))

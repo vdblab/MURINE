@@ -183,10 +183,10 @@ load_redcap_data <- function(DEBUG, filename){
       token = REDCAP_TOKEN,
       api_uri = REDCAP_URI,
       core_db_filename = filename,
-      live_db_filename = system.file("extdata", "tmp_murine_data.db", package = "MURINE")
+      live_db_filename = "tmp_murine_data.db"
     )
     # if successful, make filename global
-    filename <<- system.file("extdata", "tmp_murine_data.db", package = "MURINE")
+    filename <<- "tmp_murine_data.db"
   }, error=function(x){
     print(x)
     print("Only loading legacy data!")
