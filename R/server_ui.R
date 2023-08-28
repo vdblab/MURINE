@@ -309,6 +309,8 @@ MURINE <- function(db_path, ...){
     )
 
     observeEvent(input$repull, {
+      REDCAP_TOKEN <- Sys.getenv("MURINE_REDCAP_TOKEN")
+      REDCAP_URI <- Sys.getenv("MURINE_REDCAP_URI")
       ammend_db_from_redcap(
         token = REDCAP_TOKEN,
         api_uri = REDCAP_URI,

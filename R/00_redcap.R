@@ -12,7 +12,9 @@ ammend_db_from_redcap <- function(token,
   # if(file.exists(live_db_filename)){
   #   file.remove(live_db_filename)
   # }
-  file.copy(from = core_db_filename, to = live_db_filename, overwrite = TRUE)
+  if(core_db_filename != live_db_filename){
+    file.copy(from = core_db_filename, to = live_db_filename, overwrite = TRUE)
+  }
   # pull from redcap
   dict_and_data <- get_all_data_from_redcap(token, api_uri)
   keys <- dict_and_data$keys
