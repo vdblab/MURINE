@@ -10,7 +10,7 @@ mycolors <- c(
 # extract transplant date for currently-selected experiment to reference against death date
 db_get_tplant <- function(db, user_choice) {
   statement <- sprintf("SELECT `start_date` FROM `experiment` WHERE (`name` = '%s')", user_choice)
-  exp_info <- dbGetQuery(db, statement)
+  exp_info <- DBI::dbGetQuery(db, statement)
   paste(as.Date(exp_info$start_date, origin = "1970-01-01"))
 }
 
@@ -201,8 +201,8 @@ db_pull_flex_slow <- function(db, exp = NULL, inv = NULL, group_str = "*", treat
                               filtdateend = "2100-01-01", strain = NULL, sex = NULL, organism = "Mus musculus") {
   # this was my attempt at speeding up the above function after re-typing the mouse db dates as ints
   # it runs fast, but resolving the lazy evaluation is slow
-  jstart <- julian(ymd(filtdatestart))
-  jend <- julian(ymd(filtdateend))
+  jstart <- julian(lubridate::ymd(filtdatestart))
+  jend <- julian(lubridate::ymd(filtdateend))
 
   exps <- tbl(db, "experiment") %>%
     filter(start_date >= {{ jstart }}) %>%

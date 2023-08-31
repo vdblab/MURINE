@@ -66,7 +66,6 @@ convert_punchid <- function(x) {
   )
 }
 tidy_up_redcap <- function(keys, DF) {
-  ymd <- lubridate::ymd
   instrument_cols <- keys %>%
     select(field_name, form_name) %>%
     distinct()
@@ -144,7 +143,7 @@ tidy_up_redcap <- function(keys, DF) {
     filter(colbase == "sc_mouse_iw") %>%
     left_join(split_dfs$protocol %>% select(redcap_protocol_id, experiment_start_date)) %>%
     select(-sc_date) %>%
-    mutate(sc_date = as.character(ymd(experiment_start_date) - 1)) %>%
+    mutate(sc_date = as.character(lubridate::ymd(experiment_start_date) - 1)) %>%
     select(-experiment_start_date) %>%
     mutate(colbase = "sc_mouse_weight") %>%
     ungroup() # %>% filter(redcap_protocol_id == 13)
@@ -183,7 +182,7 @@ tidy_up_redcap <- function(keys, DF) {
     split_dfs$protocol %>%
       rename(repeat_number = `repeat`) %>%
       select(redcap_protocol_id, experiment_name, investigator_id, scoring_tech, repeat_number, experiment_start_date, hypothesis, ends_with("_date")) %>%
-      mutate(transplant_date = ymd(ifelse(!is.na(injections_tcell_date), injections_tcell_date, experiment_start_date))) %>%
+      mutate(transplant_date = lubridate::ymd(ifelse(!is.na(injections_tcell_date), injections_tcell_date, experiment_start_date))) %>%
       select(redcap_protocol_id, experiment_name, investigator_id, scoring_tech, repeat_number, experiment_start_date, hypothesis, transplant_date) %>%
       left_join(people, by = c("investigator_id" = "id")) %>% rename(investigator = name) %>%
       left_join(people, by = c("scoring_tech" = "id")) %>% select(-scoring_tech) %>% rename(scoring_tech = name) %>%
@@ -208,7 +207,7 @@ tidy_up_redcap <- function(keys, DF) {
       by = c("redcap_protocol_id", "redcap_repeat_instance" = "groupid")
     ) %>%
     mutate(
-      day = ymd(sc_date) - transplant_date,
+      day = lubridate::ymd(sc_date) - transplant_date,
       metric = case_when(
         colbase == "sc_mouse_weight" ~ "weight", 
         colbase == "sc_mouse_fs" ~ "fur", 
@@ -223,7 +222,7 @@ tidy_up_redcap <- function(keys, DF) {
       split_dfs$autopsy_sheet %>% filter(colbase %in% c("as_mouse_deathdate", "as_mouse_cause", "as_mouse_eoe")) %>%
         select(-name, -rawmouseid) %>% distinct() %>%
         tidyr::pivot_wider(names_from = colbase, values_from = value) %>%
-        mutate(death_date = as.numeric(ymd(as_mouse_deathdate))) %>%
+        mutate(death_date = as.numeric(lubridate::ymd(as_mouse_deathdate))) %>%
         select(-as_mouse_deathdate, -redcap_repeat_instance, -redcap_repeat_instrument),
       by = c("redcap_protocol_id", "mouseid", "redcap_repeat_instance" = "groupid")
     ) %>%
@@ -233,8 +232,8 @@ tidy_up_redcap <- function(keys, DF) {
   dat <-
     bind_rows(
       dat_pre %>% select(-death_date),
-      dat_pre %>% filter(!is.na(death_date)) %>% mutate(sc_date = as.character(as.Date(death_date, origin = "1970-01-01")), metric = "alive", value = 0, day = ymd(sc_date) - transplant_date) %>% select(-death_date),
-      dat_pre %>% mutate(alive = ifelse(is.na(death_date) | as.Date(death_date, origin = "1970-01-01") > ymd(sc_date), 1, 0)) %>% filter(alive == 1) %>% select(-death_date, -value) %>% mutate(metric = "alive") %>% rename(value = alive),
+      dat_pre %>% filter(!is.na(death_date)) %>% mutate(sc_date = as.character(as.Date(death_date, origin = "1970-01-01")), metric = "alive", value = 0, day = lubridate::ymd(sc_date) - transplant_date) %>% select(-death_date),
+      dat_pre %>% mutate(alive = ifelse(is.na(death_date) | as.Date(death_date, origin = "1970-01-01") > lubridate::ymd(sc_date), 1, 0)) %>% filter(alive == 1) %>% select(-death_date, -value) %>% mutate(metric = "alive") %>% rename(value = alive),
       dat_pre %>% select(-value) %>% rename(value = death_date) %>% mutate(metric = "death_date") %>% filter(!is.na(value))
     ) %>%
     rename(
