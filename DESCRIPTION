@@ -1,10 +1,36 @@
 Package: MURINE
 Title: Multifunction User Rodent Interface for iN-vivo Experiments
 Version: 0.1.6
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+Authors@R: c(
+  person(given = "Nicholas",
+             family = "Waters",
+             role = c("aut"),
+           comment = c(ORCID = "0000-0002-9035-2143")),
+    person(given="Jacob", family="Fischman",
+    role=c("aut"), comment=c(ORCID="0000-0001-6907-5033")),
+    person(given="Tyler",
+    family="Funnell",
+    role=c("aut"), comment=c(ORCID="0000-0003-1612-5644")
+    ),
+    person(given = "Anqi",
+           family = "Dai",
+           role = c("aut"),
+           comment = c(ORCID = "0000-0003-3106-4624")),
+    person(given = "Chi",
+           family = "Nguyen",
+           role = c("aut"),
+           comment = c(ORCID = "")),
+    person(given = "Anastasia",
+           family = "Kousa",
+           role = c("aut"),
+           comment = c(ORCID = "0000-0002-4550-0389")),
+    person(given = "John",
+           family = "Slingerland",
+           role = c("aut"),
+           comment = c(ORCID = "")),
+    person(given="Keimya", family="Sadeghi",
+    role=c("aut"), comment=c(ORCID="")))
+Description: MURINE allows realtime analysis of mouse experiments.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

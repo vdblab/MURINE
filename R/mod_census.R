@@ -25,7 +25,7 @@ mod_census_server <- function(id, tbl_exp_data){
         db,
         inv = NULL,
         group_str = "*",
-        filtdatestart = Sys.Date() %m-% years(5),
+        filtdatestart = Sys.Date() - (5*365),
         filtdateend = Sys.Date(), strain = NULL, sex = NULL
       ) %>%
         get_experiments_mice() %>%
@@ -34,13 +34,15 @@ mod_census_server <- function(id, tbl_exp_data){
         filter(metric == "alive") %>%
         filter(all(value==1)) %>%
         select(investigator, mouse_id, cage, exp_grp_name, ear_tag, start_date, day) %>%
-        filter(day==max(day))%>% distinct() %>%
+        filter(day==max(day)) %>% 
+        distinct() %>%
         mutate(start_date=unjul(start_date)) %>%
-        DT::datatable(        class = 'cell-border stripe',
-                              filter = 'top', extensions = 'Buttons',
-                              options=list(autoWidth = TRUE,
-                                           pageLength=500,
-                                           dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+        DT::datatable(      
+          class = 'cell-border stripe',
+          filter = 'top', extensions = 'Buttons',
+          options=list(autoWidth = TRUE,
+                       pageLength=500,
+                       dom = 'Bfrtip', buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
     },
     server = TRUE,
     )
