@@ -41,7 +41,6 @@ mod_plot_scores_server <- function(id, tbl_exp_data){
 score_demo  <- function() {
   ui <- fluidPage(
     mod_get_exp_data_ui("demo"),
-    mod_list_exps_ui("demo"),
     mod_plot_scores_ui("demo")
   )
   server <- function(input, output, session) {
@@ -53,9 +52,3 @@ score_demo  <- function() {
 }
 # score_demo()
 
-
-## To be copied in the UI
-# mod_plot_scores_ui("plot_scores_1")
-
-## To be copied in the server
-# mod_plot_scores_server("plot_scores_1")

@@ -133,7 +133,8 @@ MURINE <- function(db_path, ...){
         tabItem(
           tabName = "queries",
           h2("Query the Mouse DB"),
-          dataTableOutput("querytab"),
+          #dataTableOutput("querytab"),
+          tableOutput("querytab"),
         ),
         tabItem(
           tabName = "census",
@@ -269,16 +270,19 @@ MURINE <- function(db_path, ...){
         write.csv(exps$tbl_exp_data(), file, row.names = FALSE)
       }
     )
-    output$querytab <- DT::renderDataTable(
-      exps$tbl_exp_data(),
-      options = list(
-        pageLength = 35,
-        buttons = c("copy", "csv", "excel"),
-        autoWidth = TRUE,
-        scrollX = TRUE,
-        width = "100%"
-        # initComplete = I("function(settings, json) {alert('Done.');}")
-      )
+    # output$querytab <- DT::renderDataTable(
+    #   exps$tbl_exp_data(),
+    #   options = list(
+    #     pageLength = 35,
+    #     buttons = c("copy", "csv", "excel"),
+    #     autoWidth = TRUE,
+    #     scrollX = TRUE,
+    #     width = "100%"
+    #     # initComplete = I("function(settings, json) {alert('Done.');}")
+    #   )
+    # )
+    output$querytab <- renderTable(
+      exps$tbl_exp_data()
     )
     output$report <- downloadHandler(
       # For PDF output, change this to "report.pdf"

@@ -200,16 +200,23 @@ tidy_up_redcap <- function(keys, DF) {
       left_join(strains, by = c("host_strain" = "id")) %>% select(-host_strain) %>%
       mutate(host_sex = ifelse(host_sex == 1, "Female", "Male")), # lazy,
     by = c("redcap_protocol_id")
-  ) %>%
+  ) %>% # deal with weights and scores
     left_join(
-      split_dfs$score_and_weights_sw %>% filter(colbase %in% c("sc_mouse_weight")) %>%
+      split_dfs$score_and_weights_sw %>% filter(colbase %in% c("sc_mouse_weight", "sc_mouse_fs", "sc_mouse_ss", "ss_mouse_as", "sc_mouse_ps" )) %>%
         select(redcap_protocol_id, mouseid, sc_date, colbase, value, groupid) %>%
-        bind_rows(., initial_weights),
+        bind_rows(., initial_weights) ,
       by = c("redcap_protocol_id", "redcap_repeat_instance" = "groupid")
     ) %>%
     mutate(
       day = ymd(sc_date) - transplant_date,
-      metric = ifelse(colbase == "sc_mouse_weight", "weight", colbase)
+      metric = case_when(
+        colbase == "sc_mouse_weight" ~ "weight", 
+        colbase == "sc_mouse_fs" ~ "fur", 
+        colbase == "sc_mouse_ss" ~ "skin", 
+        colbase == "sc_mouse_as" ~ "activity", 
+        colbase == "sc_mouse_ps" ~ "posture", 
+        TRUE ~ "fix"
+      )
     ) %>%
     mutate(value = as.numeric(value)) %>%
     left_join(

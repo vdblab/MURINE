@@ -2,3 +2,4 @@
 .Rhistory
 inst/extdata/tmp_murine_data.db
 .env
+*.DS_Store

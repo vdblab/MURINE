@@ -5,7 +5,7 @@
 #' @import shiny
 #' @import ggplot2
 #' @import dplyr
-#' @importFrom tibble as_tibble tibble column_to_rownames
+#' @importFrom tibble as_tibble tibble column_to_rownames rownames_to_column
 #' @importFrom tidyselect starts_with
 #' @importFrom stats na.omit sd 'as.formula'
 #' @importFrom utils head write.csv

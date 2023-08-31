@@ -331,41 +331,56 @@ plot_weights <- function(wt_tbl, means_tbl) {
 plot_scores <- function(tbl_exp_data){
   # need to get weight scores too
   scoring_metrics <- c("skin", "fur", "posture", "activity")
-  score_days <- sort(unique(tbl_exp_data$day))
-  # get the day of last weigh-in.
-  # enter a death date as the next scoring day
-  # give dummy entries which we can match up with scores of
-  # 6 which we are labelling as NA (death) in the plot, so it appears about symptom scores of 6 (more serious).
-  # the *1.1 is because some experiment weight mice on sac days and others do not.
-  # this ensures we don't add a pseudovalue on the same day an actual value exists
-  # dead_mouse_last_weighin<- tbl_exp_data %>% filter(metric %in% c("alive", "weight")) %>%
-  #   group_by(name, exp_grp_name, mouse_id, day) %>%
-  #   summarize(day_alive = ifelse(any(metric == "alive" & value ==1), day, NA)) %>%
-  #   group_by(name, exp_grp_name, mouse_id) %>%
-  #   summarize(last_weigh_day  = max(day_alive, na.rm = TRUE)) %>%
-  #   filter(last_weigh_day != max(score_days)) %>%
-  #   mutate(day = score_days[match(last_weigh_day, score_days) + 1] * 1, dummy="NA") %>%
-  #   ungroup() %>%
-  #   left_join(data.frame(dummy="NA", value=rep(6, length(scoring_metrics)), metric=scoring_metrics )) %>%
-  #   select(-dummy)
-  #
-  # # this pivoting uis used to fill in the remaining dates
-  # dead_mouse_last_weighin %>%
-  #   group_by(name, exp_grp_name, mouse_id) %>%
-  #   left_join(data.frame(day=score_days)) %>%
+  score_days <- sort(unique(tbl_exp_data %>% filter(metric != "alive") %>% pull(day)))
+  ngroups <- length(unique(tbl_exp_data$exp_grp_name))
+  if(length(unique(tbl_exp_data$experiment_id)) > 1) {
+    print(unique(tbl_exp_data$name))
+    warning("Score plotting should only done for single experiments")
+  }
+  
+  score_data_pre <- tbl_exp_data %>% select(name, exp_grp_name, mouse_id, metric, value, day) 
+  
+#  this and the right join  add in 0's for days without scores
+  defaults <- data.frame(expand.grid("mouse_id"=unique(score_data_pre$mouse_id),  "metric"=scoring_metrics, "value"=0, "day"=score_days))
+  tmp_zero_scores <-  anti_join(defaults %>% mutate(new=T) ,
+                                score_data_pre %>% select(exp_grp_name, mouse_id, day, metric, value) %>% filter(metric %in% scoring_metrics),
+                                by = c("mouse_id", "metric", "day")
+  ) %>% left_join(score_data_pre %>% select(name, exp_grp_name, mouse_id) %>% distinct(), by="mouse_id")
+  # add in dummy 6 values to indicate mouse death
+  tmp_deaths <- score_data_pre %>% filter(metric=="alive" & value==0) %>% select(-metric, -value) %>% 
+    left_join(defaults %>% select(-value, -day) %>% distinct(), by="mouse_id") %>% 
+    mutate(value = 6)
+  
+  # combine all our dummy data, and remove any after mouse death
+  tmp_both <- bind_rows(tmp_zero_scores, tmp_deaths) %>% 
+    left_join(score_data_pre %>% filter(metric=="alive" & value==0) %>% select(mouse_id, day) %>% rename(death_day = day), by="mouse_id") %>% 
+    group_by(mouse_id) %>% 
+      filter(is.na(death_day) | day <= death_day)  %>% 
+    ungroup()
 
 
+  
+  score_data <- bind_rows(score_data_pre, tmp_both)
+  
+  score_colors <-  score_data %>% distinct(mouse_id, exp_grp_name) %>% group_by(exp_grp_name) %>% mutate(n_mice=length(unique(mouse_id)), id = 1:length(cur_group_rows())) %>% 
+    left_join(data.frame(exp_grp_name=unique(score_data_pre$exp_grp_name), color_base = mycolors[1:ngroups]), by = "exp_grp_name") %>% 
+    ungroup() %>% 
+    rowwise() %>% 
+    mutate(indv_color = grDevices::colorRampPalette(c(color_base,  "black"))(n_mice)[id])
 
-  p_summary <- tbl_exp_data %>% filter(metric %in% scoring_metrics) %>% select(-treat_desc) %>% distinct() %>%
-    # bind_rows(dead_mouse_last_weighin) %>%
-    mutate(longlab = paste(exp_grp_name, strtrim(name, width = 30), sep = "\n")) %>%
-    ggplot(aes(color=longlab, y=value, x=day)) +
-    geom_violin(aes(group=day), position = position_nudge(x=.75), width=.5) +
-    geom_point(position = position_nudge(x=-.75)) + #position=position_jitter(width = 0.5, height=.1, seed = 123)) +
-    #  geom_line(aes(group=mouse_id), position=position_jitter(width = 0.5, height=.1, seed = 123), alpha=.8) +
-    scale_y_continuous(limits=c(0, 7), breaks=c(0:7), expand=c(0, 0), labels=c(0:5, "NA (death)", "")) +
-    theme_minimal() +
-    scale_x_continuous(minor_breaks = 1, breaks = scales::pretty_breaks()) +
+  p_summary <- score_data %>% filter(metric %in% scoring_metrics) %>% distinct() %>%
+    left_join(score_colors, by=c("exp_grp_name", "mouse_id")) %>%
+    mutate(value=jitter(value),
+           day=jitter(day)) %>%
+    mutate(longlab = paste(exp_grp_name, sep = "\n")) %>%
+    ggplot(aes(color=indv_color, y=value, x=day, group=mouse_id, linetype=as.character(id))) +
+    geom_point() +
+    geom_line(aes(), alpha=1) +
+    scale_linetype_discrete(guide="none") + 
+    scale_y_continuous(limits=c(-.5, 6.5), breaks=c(0:6), labels=c(0:5, "NA (death)")) +
+    theme_minimal() + 
+    scale_color_identity(guide="none") + 
+    scale_x_continuous(minor_breaks = 1, breaks = unique(c(0, score_days))) + 
     annotate("segment", x=-Inf, xend=Inf, y=-Inf, yend=-Inf)+
     annotate("segment", x=-Inf, xend=-Inf, y=-Inf, yend=Inf) +
     labs(x="Day", y="Score", color="") +
