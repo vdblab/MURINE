@@ -402,14 +402,16 @@ make_redcap_and_db_match <- function(dat, con) {
     select(-units) %>%
     rename(metric = name)
 
+  # the any_of is here for tiny datasets that lack any as_mouse_cause
   mouse_obs_insert_dat <- dat %>%
     left_join(new_protocol_ids, by = "name") %>%
-    select(redcap_protocol_id, experiment_id, mouse_id, metric, value, score_date, as_mouse_cause) %>%
+    select(any_of(c("redcap_protocol_id", "experiment_id", "mouse_id", "metric", "value", "score_date", "as_mouse_cause"))) %>%
     mutate(score_date = str_to_julian(score_date)) %>%
     left_join(new_abs_ids, by = c("experiment_id", "score_date" = "date")) %>%
     select(-score_date) %>%
     left_join(metric_names, by = "metric") %>%
-    mutate(notes = ifelse(metric == "death_date", as_mouse_cause, "")) %>%
+    mutate(as_mouse_cause=ifelse("as_mouse_cause" %in% colnames(.), as_mouse_cause, ""),
+           notes = ifelse(metric == "death_date", as_mouse_cause, "")) %>%
     select(-as_mouse_cause) %>%
     left_join(new_mouse_ids, by = "mouse_id") %>%
     select(-mouse_id) %>%
