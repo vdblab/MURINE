@@ -1,6 +1,6 @@
 Package: MURINE
 Title: Multifunction User Rodent Interface for iN-vivo Experiments
-Version: 0.1.8
+Version: 0.1.9
 Authors@R: c(
   person(given = "Nicholas",
              family = "Waters",
