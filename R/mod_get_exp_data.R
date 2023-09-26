@@ -76,7 +76,7 @@ mod_get_exp_server <- function(id){
     ))
     skip_filter_exps <- reactive(length(input$experiment) == 0)
     list("exps_df" = tmp,
-         "tbl_exp_data" = reactive(get_experiments_mice(
+         "tbl_exp_data" = reactive(get_experiments_mice(db=db,
            tmp() %>%
              filter(skip_filter_exps() | name %in% input$experiment))  %>%
              filter(score_date >= str_to_julian(input$daterange1[1]) & score_date <= str_to_julian(input$daterange1[2])))
@@ -123,4 +123,6 @@ exp_data_demo  <- function() {
   }
   shinyApp(ui, server)
 }
+# dotenv::load_dot_env()
+# assign_dev_globals()
 # exp_data_demo()

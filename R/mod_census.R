@@ -28,7 +28,7 @@ mod_census_server <- function(id, tbl_exp_data){
         filtdatestart = Sys.Date() - (5*365),
         filtdateend = Sys.Date(), strain = NULL, sex = NULL
       ) %>%
-        get_experiments_mice() %>%
+        get_experiments_mice(db=db) %>%
         group_by(experiment_id, mouse_id) %>%
         filter(experiment_complete == 0) %>%
         filter(metric == "alive") %>%

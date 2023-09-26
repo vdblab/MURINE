@@ -28,6 +28,7 @@ mod_bad_exps_server <- function(id, tbl_exp_data){
           summarize(issue = case_when(
             any(metric == "death_date" & value <= unique(start_date)) ~ "death_date preceeds start date",
             any(metric == "weight" & value > 50 ) ~ "mouse weight exceeds 50g",
+            is.na(start_date) ~ "missing start date",
             TRUE ~ "no issues")
           ) %>%
           filter(issue != "no issues")

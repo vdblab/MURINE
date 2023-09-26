@@ -61,6 +61,16 @@ filter_by_manipulation_params <- function(exps, groups) {
   exps
 }
 
+
+screen_valid_experiments <- function(exps){
+  exps_without_start_dates <- exps %>% filter(is.na(start_date))
+  if(nrow(exps_without_start_dates) > 0){
+    warning(paste("removing the following experiments lacking a start date:", paste(collapse=",", exps_without_start_dates$name)))
+    exps <- exps %>% filter(!experiment_id %in% exps_without_start_dates$experiment_id)
+    
+  }
+  exps
+}
 db_pull_flex <- function(db, exp = NULL, inv = NULL, groups = NULL, group_str = "*", treat_str = "*", purpose_str = "*",
                          filtdatestart = "1900-01-01",
                          filtdateend = "2100-01-01", strain = NULL,
@@ -102,10 +112,8 @@ db_pull_flex <- function(db, exp = NULL, inv = NULL, groups = NULL, group_str = 
       collect() %>%
       filter(name %in% {{ exp }})
   }
-  exps <- filter_by_experiment_params(
-    exps, purpose_str = purpose_str, inv = inv,
-    jstart = jstart, jend = jend, is_ongoing = is_ongoing,
-    allow_legacy = allow_legacy)
+
+  exps <- screen_valid_experiments(exps = exps)
 
   exps <- exps %>%
     left_join(tbl(db, "experimental_group"), by = "experiment_id", copy = TRUE) %>%
@@ -123,7 +131,7 @@ db_pull_flex <- function(db, exp = NULL, inv = NULL, groups = NULL, group_str = 
   return(exps)
 }
 
-get_experiments_mice <- function(exps){
+get_experiments_mice <- function(exps, db){
 
   # Note:  it thought might be more performant to join all the db calls before joining to the in-memory `exps` object!
   # ... ... it wasn't ...
@@ -161,10 +169,11 @@ load_nonreactive_global_data <- function(filename){
   all_experiment <<- tibble(DBI::dbReadTable(db, "experiment"))
 
   all_experiment <<- all_experiment %>%
+    filter(!is.na(start_date)) %>% 
     mutate(start_date = unjul(start_date))
   all_experimental_group <<- tibble(DBI::dbReadTable(db, "experimental_group"))
   print("checking for issues with data")
-  experiments_with_known_issues <<-  db_pull_flex(db) %>% get_experiments_mice() %>% group_by(experiment_id, name, investigator) %>%
+  experiments_with_known_issues <<-  db_pull_flex(db) %>% get_experiments_mice(db=db) %>% group_by(experiment_id, name, investigator) %>%
     summarize(issue = case_when(
       any(metric == "death_date" & value <= unique(start_date)) ~ "death_date preceeds start date",
       any(metric == "weight" & value > 50 ) ~ "mouse weight exceeds 50g",
@@ -829,3 +838,17 @@ table_lst <- function(x_lst, row_names, x_col) {
   return(ret)
 }
 
+assign_dev_globals <- function(db_path, DEBUG=TRUE){
+  if(missing(db_path)) {
+    filename <<- system.file("extdata", "murine_data.db", package = "MURINE")
+  } else{
+    filename <<- db_path
+  }
+  load_redcap_data(DEBUG=DEBUG, filename=filename)
+  
+  sqlite.driver <- DBI::dbDriver("SQLite")
+  db <<- DBI::dbConnect(sqlite.driver, dbname = filename)
+  
+  load_nonreactive_global_data(filename = filename)
+  
+}
